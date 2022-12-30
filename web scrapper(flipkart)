@@ -1,0 +1,33 @@
+import requests
+import pandas as pd
+from bs4 import BeautifulSoup
+
+flip_url = "https://www.flipkart.com/computers/laptops/~asus-gaming-laptops21/pr?sid=6bo%2Cb5g&ctx=eyJjYXJkQ29udGV4dCI6eyJhdHRyaWJ1dGVzIjp7InRpdGxlIjp7Im11bHRpVmFsdWVkQXR0cmlidXRlIjp7ImtleSI6InRpdGxlIiwiaW5mZXJlbmNlVHlwZSI6IlRJVExFIiwidmFsdWVzIjpbIkFzdXMgR2FtaW5nIExhcHRvcHMiXSwidmFsdWVUeXBlIjoiTVVMVElfVkFMVUVEIn19fX19&wid=5.productCard.PMU_V2_3"
+
+try:
+    req = requests.get(flip_url)
+    content = req.content
+except requests.exceptions.RequestException as e:
+    print(e)
+soup = BeautifulSoup(content, "html.parser")
+all_laptops = soup.find_all("div", {"class": "_1AtVbE col-12-12"})
+
+
+data = []
+
+for laptop in all_laptops:
+    laptop_names = laptop.find_all("div", {"class": "_4rR01T"})
+    laptop_prizes = laptop.find_all("div", {"class": "_30jeq3"})
+    laptop_rating = laptop.find("div", {"class": "hGSR34 _2beYZw"})
+    if laptop_rating is not None:
+        rating_value = laptop_rating.get_text()
+    else:
+        rating_value = "N/A"
+    for laptop_name in laptop_names:
+        laptop_name_text = laptop_name.get_text()
+        for laptop_prize in laptop_prizes:
+            laptop_prize_text = laptop_prize.get_text()
+            data.append([laptop_name_text, laptop_prize_text, rating_value])
+
+df = pd.DataFrame(data, columns=["name","price","rating"])
+df.to_csv("laptops.csv", index=False)
